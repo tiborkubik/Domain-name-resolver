@@ -47,10 +47,6 @@ def resolve_line_get(name_, type_, ret_data):
         except:
             ret_data += " 404 Not Found\r\n\r\n"
     elif(type_ == "PTR"):   # type=B
-        if(isIpv4(name_) == False):           # validity of given IP. if its invalid, what to do?
-            ret_data += " 200 OK\r\n\r\n"
-            ret_data += name_ + ":" + type_ + "=" + name_ + "\r\n"
-            return ret_data
         try:
             dom_addr = socket.gethostbyaddr(name_)
             ret_data += " 200 OK\r\n\r\n"
@@ -71,9 +67,6 @@ def resolve_line_post(name_, type_, ret_data):
         except:
             error = 404
     elif(type_ == "PTR"):   # type=B
-        if(isIpv4(name_) == False):           # validity of given IP. if its invalid, what to do?
-            ret_data += name_ + ":" + type_ + "=" + name_ + "\r\n"
-            return ret_data
         try:
             dom_addr = socket.gethostbyaddr(name_)
             ret_data += name_ + ":" + type_ + "=" + dom_addr[0] + "\r\n"
@@ -154,7 +147,7 @@ def main():
                     if returnErr == 0:
                         ret_data += " 200 OK\r\n\r\n"
                     elif returnErr == 400:
-                        ret_data += " 404 Not Found\r\n\r\n"
+                        ret_data += " 400 Bad Request\r\n\r\n"
                     elif returnErr == 404:
                         ret_data += " 404 Not Found\r\n\r\n"
                     else:
