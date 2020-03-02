@@ -23,6 +23,7 @@ There are sever special cases that can happen - cases, when server must act some
 
  - Request is an IP address and type is A. Error 400 is returned.
  - Request is a domain name and type is PTR. Error 400 is returned.
+ - Request contains both invalid line(e.g google.com:BLAHBLAH) and an address that was not resolved. 400 Bad Request is returned in this case.
  -  Client asks for following: *curl --data-binary @queries.txt -X POST http://localhost:1500/dns-query -i* where file queries.txt  contains one line with invalid input and then queries.txt is edited and it contains an empty line. For both cases, my program tries to resolve everything and it tries to provide client as much information as possible. It means that it resolves everything what is possible, sends it to client and in mentioned cases(invalid line, empty line) if there is at least one line that was resolved successfuly, error code 200 OK is returned.
  - Repeating lines in body in `POST` method: output is returned to client exactly the same time it was required (excluding invalid input cases).
  - Empty line at the end of input. This line is skipped and does not have effect on return value.
