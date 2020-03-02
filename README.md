@@ -21,10 +21,11 @@ When the input from client was proceeded, server is waiting for another requests
 
 There are sever special cases that can happen - cases, when server must act somehow special (excluding those mentioned in the assignment)
 
- - Request is an IP address and type is A. My resolver returns back the IP, e.g `147.229.14.131:A=147.229.14.131`
- - Request is a domain name and type is PTR. My resolver calls function `gethostbyaddr()` anyway, e.g `vutbr.cz:PTR=piranha.ro.vutbr.cz
- -  Client asks for following: *curl --data-binary @queries.txt -X POST http://localhost:1500/dns-query -i* where file queries.txt  contains one line with invalid input and then queries.txt is edited and it contains an empty line. For both cases, my program tries to resolve everything and it tries to provide client as much information as possible. It means that it resolves everything what is possible, sends it to client and in mentioned cases(invalid line, empty line) it lets the user to know that there was an invalid input by returning proper error.
+ - Request is an IP address and type is A. Error 400 is returned.
+ - Request is a domain name and type is PTR. Error 400 is returned.
+ -  Client asks for following: *curl --data-binary @queries.txt -X POST http://localhost:1500/dns-query -i* where file queries.txt  contains one line with invalid input and then queries.txt is edited and it contains an empty line. For both cases, my program tries to resolve everything and it tries to provide client as much information as possible. It means that it resolves everything what is possible, sends it to client and in mentioned cases(invalid line, empty line) if there is at least one line that was resolved successfuly, error code 200 OK is returned.
  - Repeating lines in body in `POST` method: output is returned to client exactly the same time it was required (excluding invalid input cases).
+ - Empty line at the end of input. This line is skipped and does not have effect on return value.
 
 ## Conclusion
 Working on this project was my first contact with network programming using sockets (actually any network programming). At first I was a little bit lost but after reading some articles and my notes from lectures I found out how to get the desired solution. I tested my implementation on large amount of tests and I am satisfied with the results. I really enjoyed working on it and it has definitely widened my gaze in CS.
