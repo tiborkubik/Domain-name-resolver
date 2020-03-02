@@ -66,7 +66,7 @@ def resolve_line_post(name_, type_, ret_data):
             ret_data += name_ + ":" + type_ + "=" + ip_addr + "\r\n"
         except:
             error = 404
-    elif(type_ == "PTR"):   # type=B
+    elif(type_ == "PTR"):   # type=PTR
         try:
             dom_addr = socket.gethostbyaddr(name_)
             ret_data += name_ + ":" + type_ + "=" + dom_addr[0] + "\r\n"
@@ -110,11 +110,18 @@ def main():
                         type_full_ = r3[0]
                     except:
                         ret_data += " 400 Bad Request\r\n\r\n"
+                        conn.sendall(ret_data.encode("utf-8"))
+                        conn.shutdown(socket.SHUT_WR)
+                        continue
 
                     name_ = name_full_[5:]              # parsing from name=example.com just "example.com"
                     type_ = type_full_[5:]              # parsing from type=A just "A"
 
-                    if(isIpv4(name_) == False and isDomainName(name_) == False):
+                    if(isIpv4(name_) == False and isDomainName(name_) == False):        # given name is neither IP nor domain
+                        ret_data += " 400 Bad Request\r\n\r\n"
+                    elif(isIpv4(name_) == True and type_ == "A"):                       # given name is IP and type is A -> Bad request
+                        ret_data += " 400 Bad Request\r\n\r\n"
+                    elif(isDomainName(name_) == True and type_ == "PTR"):               # given name is a domain and type is PTR -> Bad request
                         ret_data += " 400 Bad Request\r\n\r\n"
                     else:
                         ret_data = resolve_line_get(name_, type_, ret_data)
@@ -123,35 +130,57 @@ def main():
                 elif(rec_request.find("POST") == 0):
                     input_lines_list = parsed_data.splitlines()
 
+                    if (req != "/dns-query"):
+                        ret_data += " 400 Bad Request\r\n\r\n"
+                        conn.sendall(ret_data.encode("utf-8"))
+                        conn.shutdown(socket.SHUT_WR)
+                        continue
+
                     post_ret = ""
                     errorCode = 0
                     returnErr = 0
-                    # We can skip 7 lines as there are not requests to resolve, just info from curl
-                    for line in input_lines_list[7:]:
-                        try:
-                            r1 = re.findall(r"^[^:]*", line)
-                            name_ = r1[0]
-                            r2 = re.findall(r"(A|PTR)$", line)
-                            type_ = r2[0]
+                    return_codes = []
 
-                            if(isIpv4(name_) == False and isDomainName(name_) == False):
+                    # We can skip 7 lines as there are not requests to resolve, just info from curl
+                    for index, line in enumerate(input_lines_list[7:]):
+
+                        # skipping last line if its empty
+                        x = index+1
+                        if(x == len(input_lines_list[7:]) and not line.strip()):
+                            break
+                        try:
+                            line = line.strip()
+                            r1 = re.findall(r"^[^(:|\s)]*", line)
+                            name_ = r1[0]
+                            r2 = line.split(':')[-1]
+                            r2 = r2.strip()
+                            if(r2 == "A" or r2 == "PTR"):
+                                type_ = r2
+                            else:
+                                errorCode = 400
+                                continue
+
+                            if(isIpv4(name_) == False and isDomainName(name_) == False):        # given name is neither IP nor domain
+                                errorCode = 400
+                            elif(isIpv4(name_) == True and type_ == "A"):                       # given name is IP and type is A -> Bad request
+                                errorCode = 400
+                            elif(isDomainName(name_) == True and type_ == "PTR"):               # given name is a domain and type is PTR -> Bad request
                                 errorCode = 400
                             else:
                                 post_ret, errorCode = resolve_line_post(name_, type_, post_ret)
                         except:
                             errorCode = 400
 
-                        if errorCode != 0:
-                            returnErr = errorCode
+                        return_codes.append(errorCode)
 
-                    if returnErr == 0:
+                    if (0 in return_codes):
                         ret_data += " 200 OK\r\n\r\n"
-                    elif returnErr == 400:
+                    elif (400 in return_codes and 0 not in return_codes):
                         ret_data += " 400 Bad Request\r\n\r\n"
-                    elif returnErr == 404:
+                    elif(404 in return_codes and 0 not in return_codes):
                         ret_data += " 404 Not Found\r\n\r\n"
                     else:
-                        ret_data += " 500 Internal Server Error\r\n\r\n"
+                        ret_data += " 400 Bad Request\r\n\r\n"
 
                     ret_data += post_ret
                 else:
