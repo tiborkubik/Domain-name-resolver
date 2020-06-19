@@ -2,7 +2,6 @@
 # Project 1 for IPK course ([Computer Communications and Networks](https://www.fit.vut.cz/study/course/13334/.en))
 
 **Author:** Tibor Kubik
-**Contact mail:** xkubik34@stud.fit.vutbr.cz
 
 The aim of this project is to to implement a server which will be able to resolve domain names. For this purpose two methods will be garanted: **GET** and **POST**.
 
